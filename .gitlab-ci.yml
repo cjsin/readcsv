@@ -1,4 +1,4 @@
-image: python:latest
+image: python:3.9-buster
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -58,6 +58,12 @@ docs:
     - python3 -m venv venv
     - . venv/bin/activate
     - pip install pdoc3
-    - pdoc $PACKAGE_NAME
+    - mkdir -p docs
+    - PYTHONPATH=src pdoc $PACKAGE_NAME > README_api.md
+    - PYTHONPATH=src pdoc --html -o docs/html $PACKAGE_NAME
+  artifacts:
+    paths:
+      - README_api.md
+      - docs/html/$(PACKAGE_NAME)/**/*.*
   tags:
     - container
