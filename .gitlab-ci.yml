@@ -1,0 +1,63 @@
+image: python:latest
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PACKAGE_NAME: readcsv
+
+cache:
+  paths:
+    - .cache/pip
+    - venv/
+
+before_script:
+  - python -V  # Print out python version for debugging
+
+stages:
+  - build
+  - install
+  - test
+  - docs
+
+build:
+  stage: build
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - pip install --upgrade pip
+    - pip install --upgrade build
+    - python -m build
+  artifacts:
+    paths:
+      - dist/*.whl
+  tags:
+    - container
+
+test-install:
+  stage: install
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - pip install --upgrade pip
+    - pip install dist/*.whl
+  tags:
+    - container
+
+run-examples:
+  stage: test
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - python3 -m readcsv.test_csvreader
+    - python3 -m readcsv.examples
+  tags:
+    - container
+
+docs:
+  stage: docs
+  script:
+    - python3 -m venv venv
+    - . venv/bin/activate
+    - pip install pdoc3
+    - pdoc $PACKAGE_NAME
+  tags:
+    - container
