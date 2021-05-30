@@ -94,19 +94,24 @@ class CsvReader:
         #   Example input data:
         #      a,b,c       #header
         #      1,2,3,d,e   #data
-        #   dictify=False,extra_column_method='generate',  extra_columns='column_{}'            produces columns (a,b,c,column_4,column_5) row ['a','b','c','d','e']
-        #   dictify=False,extra_column_method='append-last',                                    produces columns (a,b,c)                   row ['a','b','c,d,e']
-        #   dictify=False,extra_column_method='append-last:as-list'                             produces columns (a,b,c)                   row ['a','b',['c','d','e']]
-        #   dictify=False,extra_column_method='store',             extra_columns='extra_data'   produces columns (a,b,c,extra_data)        row ['a','b','c','d,e']
-        #   dictify=False,extra_column_method='store:as-list',     extra_columns='extra_data'   produces columns (a,b,c,extra_data)        row ['a','b','c',['d','e']]
-        #   dictify=True, extra_column_method='generate',          extra_columns='column_{}'    produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','column_4':'d','column_5': 'e'}
-        #   dictify=True, extra_column_method='append-last',                                    produces columns (a,b,c)                   row {'a':'a','b':'b','c':'c,d,e'}
-        #   dictify=True, extra_column_method='append-last:as-list',                            produces columns (a,b,c)                   row {'a':'a','b':'b','c':['c','d','e']}
-        #   dictify=True, extra_column_method='store',             extra_columns='extra_data'   produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','extra_data':'d,e'}
-        #   dictify=True, extra_column_method='store:as-list',     extra_columns='extra_data'   produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','extra_data':['d','e']}
-        if isinstance(extra_columns_method, str):
-            extra_columns_method = extra_columns_method.split(':')
+        #   dictify=False,extra_columns_method='generate',  extra_columns='column_{}'            produces columns (a,b,c,column_4,column_5) row ['a','b','c','d','e']
+        #   dictify=False,extra_columns_method='append-last',                                    produces columns (a,b,c)                   row ['a','b','c,d,e']
+        #   dictify=False,extra_columns_method='append-last:as-list'                             produces columns (a,b,c)                   row ['a','b',['c','d','e']]
+        #   dictify=False,extra_columns_method='store',             extra_columns='extra_data'   produces columns (a,b,c,extra_data)        row ['a','b','c','d,e']
+        #   dictify=False,extra_columns_method='store:as-list',     extra_columns='extra_data'   produces columns (a,b,c,extra_data)        row ['a','b','c',['d','e']]
+        #   dictify=True, extra_columns_method='generate',          extra_columns='column_{}'    produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','column_4':'d','column_5': 'e'}
+        #   dictify=True, extra_columns_method='append-last',                                    produces columns (a,b,c)                   row {'a':'a','b':'b','c':'c,d,e'}
+        #   dictify=True, extra_columns_method='append-last:as-list',                            produces columns (a,b,c)                   row {'a':'a','b':'b','c':['c','d','e']}
+        #   dictify=True, extra_columns_method='store',             extra_columns='extra_data'   produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','extra_data':'d,e'}
+        #   dictify=True, extra_columns_method='store:as-list',     extra_columns='extra_data'   produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','extra_data':['d','e']}
+        if extra_columns_method is None:
+            extra_columns_method = []
+        elif isinstance(extra_columns_method, str):
+            extra_columns_method = extra_columns_method.split(':') if extra_columns_method else []
+
         self.extra_columns_method = extra_columns_method
+
+        self.raise_error = raise_error
 
         if 'generate' in extra_columns_method and isinstance(extra_columns, str) and '{' in extra_columns:
             # Produce a format generator function from the generator string
@@ -114,7 +119,7 @@ class CsvReader:
         else:
             self.extra_columns = extra_columns
         for item in self.extra_columns_method:
-            if item not in [ 'generate', 'append-last', 'as-list', 'store' ]:
+            if item not in [ 'ignore', 'generate', 'append-last', 'as-list', 'store' ]:
                 self.SetError("Bad value {} for extra_columns_method".format(extra_columns_method))
 
         self.missing_values = missing_values
@@ -127,7 +132,6 @@ class CsvReader:
         self.skip = skip
         self.skip_count = skip_count
         self.skip_empty_lines = skip_empty_lines
-        self.raise_error = raise_error
 
         self.comment_char = comment_char
 
@@ -139,7 +143,7 @@ class CsvReader:
                 attrdict = importlib.import_module("attrdict")
                 dict_type = attrdict.AttrDict
             except:
-                self.msg("WARNING: AttrDict type is not available. Standard dict type used instead.")
+                self.msg("WARNING: AttrDict type is not available. Standard dict type used instead. You can customise this by setting dict_type in the constructor.")
                 dict_type = dict
 
         self.dict_type = dict_type
@@ -361,16 +365,16 @@ class CsvReader:
         #   Example input data:
         #      a,b,c       #header
         #      1,2,3,d,e   #data
-        #   dictify=False, extra_column_method='generate',          extra_columns='column_{}'    produces columns (a,b,c,column_4,column_5) row ['a','b','c','d','e']
-        #   dictify=False, extra_column_method='append-last',                                    produces columns (a,b,c)                   row ['a','b','c,d,e']
-        #   dictify=False, extra_column_method='append-last:as-list'                             produces columns (a,b,c)                   row ['a','b',['c','d','e']]
-        #   dictify=False, extra_column_method='store',             extra_columns='extra_data'   produces columns (a,b,c,extra_data)        row ['a','b','c','d,e']
-        #   dictify=False, extra_column_method='store:as-list',     extra_columns='extra_data'   produces columns (a,b,c,extra_data)        row ['a','b','c',['d','e']]
-        #   dictify=True,  extra_column_method='generate',          extra_columns='column_{}'    produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','column_4':'d','column_5': 'e'}
-        #   dictify=True,  extra_column_method='append-last',                                    produces columns (a,b,c)                   row {'a':'a','b':'b','c':'c,d,e'}
-        #   dictify=True,  extra_column_method='append-last:as-list',                            produces columns (a,b,c)                   row {'a':'a','b':'b','c':['c','d','e']}
-        #   dictify=True,  extra_column_method='store',             extra_columns='extra_data'   produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','extra_data':'d,e'}
-        #   dictify=True,  extra_column_method='store:as-list',     extra_columns='extra_data'   produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','extra_data':['d','e']}
+        #   dictify=False, extra_columns_method='generate',          extra_columns='column_{}'    produces columns (a,b,c,column_4,column_5) row ['a','b','c','d','e']
+        #   dictify=False, extra_columns_method='append-last',                                    produces columns (a,b,c)                   row ['a','b','c,d,e']
+        #   dictify=False, extra_columns_method='append-last:as-list'                             produces columns (a,b,c)                   row ['a','b',['c','d','e']]
+        #   dictify=False, extra_columns_method='store',             extra_columns='extra_data'   produces columns (a,b,c,extra_data)        row ['a','b','c','d,e']
+        #   dictify=False, extra_columns_method='store:as-list',     extra_columns='extra_data'   produces columns (a,b,c,extra_data)        row ['a','b','c',['d','e']]
+        #   dictify=True,  extra_columns_method='generate',          extra_columns='column_{}'    produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','column_4':'d','column_5': 'e'}
+        #   dictify=True,  extra_columns_method='append-last',                                    produces columns (a,b,c)                   row {'a':'a','b':'b','c':'c,d,e'}
+        #   dictify=True,  extra_columns_method='append-last:as-list',                            produces columns (a,b,c)                   row {'a':'a','b':'b','c':['c','d','e']}
+        #   dictify=True,  extra_columns_method='store',             extra_columns='extra_data'   produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','extra_data':'d,e'}
+        #   dictify=True,  extra_columns_method='store:as-list',     extra_columns='extra_data'   produces columns (a,b,c,column_4,column_5) row {'a':'a','b':'b','c':'c','extra_data':['d','e']}
 
         method = self.extra_columns_method
         fmt = self.extra_columns
@@ -429,6 +433,10 @@ class CsvReader:
                         row.append(self.missing_values)
                 row[idx] = extras
                 extras = None
+
+        if 'ignore' in method:
+            # silently discard the data as requested
+            extras = None
 
         return columns, row, extras
 
