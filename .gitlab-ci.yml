@@ -2,7 +2,6 @@ image: python:3.9-buster
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PACKAGE_NAME: readcsv
 
 .cache-paths: &cache-paths
@@ -21,7 +20,7 @@ variables:
     policy: push
 
 before_script:
-  - /usr/bin/python3 -V  # Print out python version for debugging
+  - python3 -V  # Print out python version for debugging
   - env| egrep 'CI_|PIP_' || true
 
 stages:
@@ -83,10 +82,7 @@ run-examples:
   stage: docs
   script:
     - . venv/bin/activate
-    - pip list
-    - pip install pytest pdoc3
-    - pip install dist/*.whl
-    - pip list
+    - pip install pytest pdoc3 dist/*.whl
     - mkdir -p public
     - PYTHONPATH=src pdoc $PACKAGE_NAME > public/README_api.md
     - PYTHONPATH=src pdoc --html -o public/html $PACKAGE_NAME
