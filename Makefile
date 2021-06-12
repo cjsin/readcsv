@@ -8,7 +8,9 @@ README       := README.md
 README_API   := README_api.md
 SRC          := src
 SOURCES      := $(wildcard $(SRC)/$(PACKAGE_NAME)/*.py)
-RUN_PY_MOD   := python3 -m
+PYVER        := 3.9
+PYTHON       := python$(PYVER)
+RUN_PY_MOD   := $(PYTHON) -m
 RUN_TESTS    := $(RUN_PY_MOD) $(PACKAGE_NAME).test_csvreader
 WITH_VENV    := $(ACTIVATE) &&
 PIP_INSTALL  := $(WITH_VENV) pip install
@@ -30,6 +32,10 @@ RUN_EXAMPLE1   := $(RUN_PY_MOD) $(PACKAGE_NAME).examples
 RUN_EXAMPLES   := ( $(RUN_EXAMPLE1 )
 WITH_PYPATH    := PYTHONPATH=$(PWD)/$(SRC)
 
+PYLINT_DISABLED := \
+    invalid-name,too-many-branches,line-too-long
+PYLINT_FLAGS := -d $(subst $(space),$(comma),$(PYLINT_DISABLED))
+
 CLEAN_PATTERNS := \
     build \
     dist \
@@ -47,7 +53,7 @@ version:
 	@echo Sources: $(SOURCES)
 
 lint: venv
-	$(WITH_VENV) pylint $(SRC)
+	$(WITH_VENV) pylint $(PYLINT_FLAGS) $(SRC)
 
 $(README_API): venv $(SOURCES)
 	$(WITH_VENV) $(WITH_PYPATH) pdoc $(PACKAGE_NAME) > $(README_API)
@@ -88,7 +94,7 @@ clean-venv:
 	rm -rf ./$(VENV)
 
 create-venv:
-	python3 -m venv $(VENV)
+	$(PYTHON) -m venv $(VENV)
 	$(PIP_INSTALL) --upgrade pip
 	$(PIP_INSTALL) pylint pdoc3 build pytest $(OPTIONALS)
 
@@ -102,9 +108,6 @@ venv-install: venv $(DISTWHEEL)
 venv-run-example1: venv-install
 	$(WITH_VENV) $(RUN_EXAMPLE1)
 
-
-
-
 venv-run-examples: venv-run-example1
 
 venv-run-tests: venv-install
@@ -117,11 +120,8 @@ examples: example1
 example1:
 	$(WITH_PYPATH) $(RUN_EXAMPLE1)
 
-
-
-
 test: venv
-	$(WITH_VENV) $(RUN_TESTS)
+	$(WITH_VENV) $(WITH_PYPATH) $(RUN_TESTS)
 
 run: examples
 

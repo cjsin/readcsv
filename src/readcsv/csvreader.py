@@ -1,3 +1,5 @@
+""" provides the CsvReader class """
+# pylint: disable=missing-function-docstring
 import sys
 import re
 import importlib
@@ -5,6 +7,7 @@ import importlib
 from pprint import pformat
 
 class CsvReader:
+    # pylint: disable=too-many-instance-attributes
     """
     CSV reader class that supports basic CSV files.
     The primary reason for this class is that it will support CSV files which have an extra comma
@@ -64,6 +67,7 @@ class CsvReader:
                  raise_error=False,
                  msg=None
                 ):
+        # pylint: disable=too-many-arguments,too-many-locals,too-many-statements
         self.quotechar = quotechar
         self.sep = sep
         self.quiet = quiet
@@ -140,6 +144,7 @@ class CsvReader:
         if dictify and dict_type is None:
             # use importlib for geting the AttrDict type, so that it is a soft dependency only
             try:
+                # pylint: disable=bare-except
                 attrdict = importlib.import_module("attrdict")
                 dict_type = attrdict.AttrDict
             except:
@@ -153,7 +158,8 @@ class CsvReader:
     def __str__(self):
         return "CSV file currently with {} rows and {} columns (header={})".format(len(self.rows), len(self.header), pformat(self.header))
 
-    def SplitLine(self,line):
+    def SplitLine(self, line):
+        # pylint: disable=missing-function-docstring,too-many-statements
         beg = 0
         quote_idx = line.find(self.quotechar)
         if quote_idx < 0:
@@ -174,67 +180,66 @@ class CsvReader:
             if beg >= sz:
                 yield keep
                 return
-            elif inquote and next_sep == beg: # Comma within quoted section, accumulate it
+            if inquote and next_sep == beg: # Comma within quoted section, accumulate it
                 keep += sep
                 beg += 1
                 continue
-            elif next_sep == beg: # Comma starting next field. Return anything accumulated
+            if next_sep == beg: # Comma starting next field. Return anything accumulated
                 yield keep
                 keep = ""
                 beg +=1
                 continue
-            elif inquote and next_quote == beg: # End quoted section, continue looking for sep
+            if inquote and next_quote == beg: # End quoted section, continue looking for sep
                 keep += line[beg:next_quote]
                 beg +=1
                 inquote = False
                 continue
-            elif next_quote == beg: # Begin quoted section, skip this single quote.
+            if next_quote == beg: # Begin quoted section, skip this single quote.
                 inquote = True
                 beg +=1
                 continue
-            elif inquote and next_quote > beg: # Accumulate up to the next quote, if one found
+            if inquote and next_quote > beg: # Accumulate up to the next quote, if one found
                 keep += line[beg:next_quote]
                 beg = next_quote + 1 # skip this quote
                 inquote = False
                 continue
-            elif inquote and next_quote <= beg: # In quoted section,but no more quotes avail.
+            if inquote and next_quote <= beg: # In quoted section,but no more quotes avail.
                 keep += line[beg:] # Accumlate everything to end of line
                 yield keep
                 keep = ""
                 return # Finish
-            elif next_sep > 0 and next_quote > next_sep:  # From this point on, inquote==False
+            if 0 < next_sep < next_quote:  # From this point on, inquote==False
                 keep += line[beg:next_sep]  # There is another quote, but next comma is closer than next quote
                 beg = next_sep + 1
                 yield keep
                 keep = ""
                 continue
-            elif next_sep > 0 and next_quote >= beg and next_quote < next_sep:
+            if  next_sep > 0 and next_sep > next_quote >= beg:
                 # Accumulate up to the quote and begin quoted section.
                 keep += line[beg:next_quote]
                 beg = next_quote + 1
                 inquote = True
                 continue
-            elif next_sep > 0 and next_quote <=beg:
+            if next_sep > 0 and next_quote <=beg:
                 keep += line[beg:next_sep]
                 beg = next_sep + 1
                 yield keep
                 keep = ""
                 continue
-            elif next_sep < 0 and next_quote >= 0:
+            if next_sep < 0 <= next_quote:
                 keep += line[beg:next_quote]
                 beg = next_quote + 1
                 inquote = True
                 continue
-            elif next_sep < 0 and next_quote < 0:
+            if next_sep < 0 and next_quote < 0:
                 # Neither separator or quote have been seen.
                 # Grab to the end of the line, and finish.
                 keep += line[beg]
                 yield keep
                 keep = ""
                 return
-            else:
-                self.msg("This should never happen")
-                return
+            self.msg("This should never happen")
+            return
         return
 
 
@@ -245,9 +250,11 @@ class CsvReader:
         self.error = None
         err_generated = None
         try:
+            # pylint: disable=bare-except
             with open(f, 'r') as fh:
                 for line in fh.readlines():
                     try:
+                        # pylint: disable=bare-except
                         row = self.ProcessLine(line)
                         if self.error:
                             err_generated = None
@@ -295,7 +302,8 @@ class CsvReader:
         if self.skip_count is not None and self.skip_count > 0:
             self.skip_count -= 1
             return None
-        elif self.skip is not None:
+
+        if self.skip is not None:
             if re.match(self.skip, line):
                 return None
 
@@ -306,8 +314,7 @@ class CsvReader:
 
         if self.header is None:
             return self.HandleHeader(line)
-        else:
-            return self.HandleData(line)
+        return self.HandleData(line)
 
     def HandleData(self, line):
         self.relative_row_number += 1
@@ -340,8 +347,7 @@ class CsvReader:
         if self.return_header_row:
             self.relative_row_number += 1
             return self.header
-        else:
-            return None
+        return None
 
     def SetError(self, errmsg):
         self.error = errmsg

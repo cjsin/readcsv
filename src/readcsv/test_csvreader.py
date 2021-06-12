@@ -1,6 +1,12 @@
+"""
+tests for csvreader
+"""
+import unittest
+
+# pylint: disable=wildcard-import,missing-function-docstring,unused-wildcard-import
+
 from readcsv.csvreader import *
 
-import unittest
 
 def reader(**kwargs):
     return CsvReader(dict_type=dict, **kwargs)
@@ -50,7 +56,7 @@ class TestCsvParsing(unittest.TestCase):
         lines = TestCsvParsing.input_lines
         expected = TestCsvParsing.expected
 
-        rows = [ x for x in r.ProcessLines(lines) ]
+        rows = list(r.ProcessLines(lines))
 
         # self.assertEqual(len(rows),len(expected))
         # for i in range(0,len(expected)):
@@ -66,7 +72,7 @@ class TestExtraColumnHandling(unittest.TestCase):
     def check_data(self, testdata):
         for t in testdata:
             r, lines, expected_columns, expected = t
-            rows = [ x for x in r.ProcessLines(lines)]
+            rows = list(r.ProcessLines(lines))
             self.assertEqual(expected_columns, r.GetColumns())
             self.assertEqual(expected, rows)
 
@@ -89,13 +95,14 @@ class TestExtraColumnHandling(unittest.TestCase):
     def test_no_header(self):
         abc = [ "a", "b", "c" ]
         datarow = [ "a,b,c,d,e" ]
-        in_data = [ "a,b,c" ] + datarow
+        #in_data = [ "a,b,c" ] + datarow
         testdata = [
             [ reader(has_header=False, header=abc),                                                datarow, abc + [ 'column_4', 'column_5' ], [ [ "a", "b", "c", "d", "e" ] ] ],
         ]
         self.check_data(testdata)
 
     def test_header_validation(self):
+        # pylint: disable=too-many-locals
         in_header      = [ "a,b,c" ]
         in_datarow     = [ "a,b,c,d,e" ]
         in_badheader   = [ "x,y,z" ]
@@ -116,7 +123,7 @@ class TestExtraColumnHandling(unittest.TestCase):
 
         for t in bad_data:
             r, lines, _expected_columns, _expected = t
-            _rows = [ x for x in r.ProcessLines(lines) ]
+            _rows = list(r.ProcessLines(lines))
             self.assertIsNotNone(r.GetError())
 
 

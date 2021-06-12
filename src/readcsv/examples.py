@@ -1,3 +1,7 @@
+""" examples for readcsv """
+
+# pylint: disable=missing-function-docstring
+
 import sys
 import os
 import textwrap
@@ -25,13 +29,13 @@ def example_1(**flags):
     """Read an array of line data"""
     lines = EXAMPLE_DATA.splitlines()
     reader = CsvReader(**flags)
-    rows = [ r for r in reader.ProcessLines(lines)]
+    rows = list(reader.ProcessLines(lines))
     dump_rows(rows)
 
 def example_2(**flags):
     """Read a multi-line chunk of text data"""
     reader = CsvReader(**flags)
-    rows = [ r for r in reader.ProcessData(EXAMPLE_DATA)]
+    rows = list(reader.ProcessData(EXAMPLE_DATA))
     for row in rows:
         dump_row(row)
 

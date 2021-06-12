@@ -6,7 +6,6 @@
 	],
 	"settings": {
 		"files.exclude": {
-			"*.whl": true,
 			"**/*.egg-info": true,
 			"build": true,
 			"dist": true
