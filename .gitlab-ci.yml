@@ -107,5 +107,5 @@ upload-successful:
   stage: upload-successful
   script:
     - . venv/bin/activate
-    - pip install twine
+    - test -n "${TWINE_UPLOAD}" && pip install twine
     - test -n "${TWINE_UPLOAD}" && twine upload -u "${TWINE_USERNAME}" --repository-url "${TWINE_REPOSITORY}" dist/*.whl
