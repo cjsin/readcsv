@@ -1,12 +1,11 @@
-PACKAGE_NAME := readcsv
+PACKAGE_NAME = readcsv
 
 include Makefile.pymodule
 
-RUN_TESTS      := $(RUN_PY_MOD) $(PACKAGE_NAME).test_csvreader
-RUN_MAIN       := $(RUN_PY_MOD) $(PACKAGE_NAME)
-RUN_EXAMPLE1   := $(RUN_PY_MOD) $(PACKAGE_NAME).examples
-
-RUN_EXAMPLES   := ( $(RUN_EXAMPLE1 )
+RUN_TESTS    = $(RUN_PY_MOD) $(PACKAGE_NAME).test_csvreader
+RUN_MAIN     = $(RUN_PY_MOD) $(PACKAGE_NAME)
+RUN_EXAMPLE1 = $(RUN_PY_MOD) $(PACKAGE_NAME).examples
+RUN_EXAMPLES = ( $(RUN_EXAMPLE1 )
 
 venv-run-example1: venv-install
 	$(WITH_VENV) $(RUN_EXAMPLE1)

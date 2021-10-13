@@ -122,10 +122,10 @@ venv-install: venv $(DISTWHEEL)
 upload-release:
 	test -f "$(DISTWHEEL)"    || $(call echo_fail,No distwheel file available)
 	test -n "$(TWINE_UPLOAD)" || $(call echo_fail,No twine upload repo set)
-	$(TWINE_UPLOAD_WHEEL) "$(DISTWHEEL)"
+	$(UPLOAD_WHEEL) "$(DISTWHEEL)"
 
 upload-dev:
 	make print-vars
 	test -f dist/$(DISTWHEEL_LAST) || $(call echo_fail No distwheel file available)
 	test -n "$(TWINE_UPLOAD)"      || $(call echo_fail No twine upload repo set)
-	$(TWINE_UPLOAD_WHEEL) "dist/$(DISTWHEEL_LAST)"
+	$(UPLOAD_WHEEL) "dist/$(DISTWHEEL_LAST)"
