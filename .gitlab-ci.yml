@@ -4,14 +4,14 @@ variables:
   PACKAGE_NAME: readcsv
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
+.common:
+  tags:
+  - container
+
 .cache-paths: &cache-paths
   paths:
     - .cache/pip
     - venv
-
-.common:
-  tags:
-  - container
 
 .cache-user:
   extends: .common
