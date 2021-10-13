@@ -43,7 +43,11 @@ stages:
     - python3 -m venv venv
     - . venv/bin/activate
     - if test -n "$TWINE_UPLOAD" ; then export PIP_EXTRA_INDEX_URL=$TWINE_REPOSITORY/simple/ ; fi
-    - pip install --upgrade pip build wheel setuptools
+    - pip install --upgrade pip build wheel setuptools pytest
+  rules:
+    - exists:
+        - venv/
+      when: never
 
 .build:
   extends: .cache-user
@@ -59,10 +63,19 @@ stages:
   extends: .cache-user
   stage: install
   script:
+    - if test -n "${APT_PKG}"; then apt-get update; apt -y install $APT_PKG ; fi
     - . venv/bin/activate
     - pip list
     - pip install dist/*.whl
     - pip list
+
+.pytest:
+  extends: .cache-user
+  stage: test
+  script:
+    - . venv/bin/activate
+    - pip install dist/*.whl
+    - pytest $PACKAGE_NAME
 
 .run-examples:
   extends: .cache-user
@@ -97,5 +110,4 @@ stages:
   stage: upload-successful
   script:
     - . venv/bin/activate
-    - test -n "${TWINE_UPLOAD}" && pip install twine
-    - test -n "${TWINE_UPLOAD}" && twine upload -u "${TWINE_USERNAME}" --repository-url "${TWINE_REPOSITORY}" dist/*.whl
+    - if test -n "${TWINE_UPLOAD}" ; then pip install twine; twine upload -u "${TWINE_USERNAME}" --repository-url "${TWINE_REPOSITORY}" dist/*.whl ; fi
