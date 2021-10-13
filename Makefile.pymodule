@@ -110,7 +110,7 @@ build-reqs: venv
 	rm -rf $(SRC)/*.egg-info
 
 .copy-distwheel-last:
-	echo "copy-distwheel-last:$(shell ls -tr dist/$(DISTWHEEL_GLOB) 2> /dev/null | head -n1 | cut -d/ -f2-)" 
+	echo "copy-distwheel-last:$(shell ls -tr dist/$(DISTWHEEL_GLOB) 2> /dev/null | head -n1 | cut -d/ -f2-)"
 	echo test -f "dist/$(DISTWHEEL_LAST)"
 	test -f "dist/$(DISTWHEEL_LAST)"
 	cp "dist/$(DISTWHEEL_LAST)" "$(DISTWHEEL)"
@@ -130,7 +130,7 @@ $(DISTWHEEL): dist/$(DISTWHEEL)
 wheel: $(DISTWHEEL)
 
 clean: clean-docs clean-venv
-	bash -c 'shopt -s globstar; rm -rf  $(CLEAN_PATTERNS) '   
+	bash -c 'shopt -s globstar; rm -rf  $(CLEAN_PATTERNS) '
 
 clean-docs:
 	rm -rf ./docs
