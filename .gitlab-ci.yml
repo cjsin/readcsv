@@ -1,8 +1,8 @@
 image: python:3.9-buster
 
 variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   PACKAGE_NAME: readcsv
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 .cache-paths: &cache-paths
     paths:
@@ -29,6 +29,7 @@ stages:
   - install
   - test
   - docs
+  - upload-successful
 
 
 prep:
@@ -37,6 +38,7 @@ prep:
   script:
     - python3 -m venv venv
     - . venv/bin/activate
+    - if test -n "$TWINE_UPLOAD" ; then export PIP_EXTRA_INDEX_URL=$TWINE_REPOSITORY/simple/ ; fi
     - pip install --upgrade pip build wheel setuptools
   tags:
     - container
@@ -69,9 +71,7 @@ run-examples:
   stage: test
   script:
     - . venv/bin/activate
-    - pip list
     - pip install dist/*.whl
-    - pip list
     - python3 -m readcsv.test_csvreader
     - python3 -m readcsv.examples
   tags:
@@ -101,3 +101,11 @@ pages:
   extends: .docs-stage
   only:
     - master
+
+upload-successful:
+  extends: .cache-user
+  stage: upload-successful
+  script:
+    - . venv/bin/activate
+    - pip install twine
+    - test -n "${TWINE_UPLOAD}" && twine upload -u "${TWINE_USERNAME}" --repository-url "${TWINE_REPOSITORY}" dist/*.whl

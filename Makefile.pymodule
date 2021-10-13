@@ -1,0 +1,131 @@
+SHELL          := bash
+# Macros for use in path generation
+empty          :=
+space          := $(empty) $(empty)
+comma           = ,
+colon           = :
+join-with       = $(subst $(space),$1,$(strip $2))
+path-gen        = $(join-with $(colon),$1)
+VENV           := venv
+ACTIVATE       := source $(VENV)/bin/activate
+VERSION        := $(shell tr -d ' ' < setup.cfg | awk -F= '/^version=/ {print $$2}')
+DISTWHEEL_GLOB  = $(PACKAGE_NAME)-$(VERSION)*-py3-none-any.whl
+DISTWHEEL_LAST := $(shell ls -tr dist/$(DISTWHEEL_GLOB) | head -n1 | cut -d/ -f2-)
+DISTWHEEL      := $(PACKAGE_NAME)-$(VERSION)-py3-none-any.whl
+README         := README.md
+README_API     := README_api.md
+SRC            := src
+SOURCES        := $(wildcard $(SRC)/$(PACKAGE_NAME)/*.py)
+PYTHON         := python3
+PYVER          := $(shell $(PYTHON) --version | awk '{print $$2}' | cut -d. -f1-2)
+PYVER_NODOTS   := $(subst .,,$(PYVER))
+RUN_PY_MOD     := $(PYTHON) -m
+WITH_VENV      := $(ACTIVATE) &&
+PIP_INSTALL    := $(WITH_VENV) pip install
+WITH_PYPATH    := PYTHONPATH=$(PWD)/$(SRC)
+OPTIONALS      := attrdict
+MD_VIEWER      := retext
+DOCS_INDEX     := docs/html/$(PACKAGE_NAME)/index.html
+TWINE_UPLOAD   ?= ""
+UPLOAD_WHEEL    = twine upload -r "$(TWINE_UPLOAD)"
+PYLINT_DISABLED = invalid-name \
+                  too-many-branches \
+                  too-many-instance-attributes \
+                  line-too-long
+PYLINT_FLAGS   := -d $(call join-with,$(comma),$(PYLINT_DISABLED))
+CLEAN_PATTERNS := \
+    build \
+    dist \
+    src/$(PACKAGE_NAME)/__pycache__ \
+    .pytest_cache \
+    *.whl \
+    src/*.egg-info
+
+define echo_fail
+	(echo "$(1)"; false)
+endef
+
+all: build
+
+print-vars:
+	@echo "PYVER_NODOTS   = $(PYVER_NODOTS)"
+	@echo "PACKAGE_NAME   = $(PACKAGE_NAME)"
+	@echo "DISTWHEEL_GLOB = $(DISTWHEEL_GLOB)"
+	@echo "DISTWHEEL_LAST = $(DISTWHEEL_LAST)"
+	@echo "DISTWHEEL      = $(DISTWHEEL)"
+	@echo "TWINE_UPLOAD   = $(TWINE_UPLOAD)"
+
+version:
+	@echo Package: $(PACKAGE_NAME)
+	@echo Version: $(VERSION)
+	@echo Wheel:   $(DISTWHEEL)
+	@echo Sources: $(SOURCES)
+
+dist-clean:
+	rm -f dist/*.*
+
+lint: venv
+	$(WITH_VENV) pylint $(PYLINT_FLAGS) $(SRC)
+
+$(README_API): venv $(SOURCES)
+	$(WITH_VENV) $(WITH_PYPATH) pdoc $(PACKAGE_NAME) > $(README_API)
+
+docs-html: venv
+	mkdir -p docs
+	$(WITH_VENV) $(WITH_PYPATH) pdoc --html -o docs/html $(PACKAGE_NAME)
+
+docs: $(README_API) clean-docs docs-html
+
+view-docs: docs
+	command -v $(MD_VIEWER) && $(MD_VIEWER) README*.md || echo "Markdown viewer not installed" &
+	xdg-open file://$(PWD)/$(DOCS_INDEX) &
+
+build-reqs: venv
+	($(WITH_VENV) pip list | egrep '^build[[:space:]]') || ( $(PIP_INSTALL) --upgrade build )
+
+.PHONY:: build
+build: dist-clean build-reqs
+	$(WITH_VENV) python3 -m build
+	test -f "dist/$(DISTWHEEL_LAST)"
+	cp dist/$(DISTWHEEL_LAST) $(DISTWHEEL)
+
+.PHONY:: dist
+dist: $(DISTWHEEL)
+dist/$(DISTWHEEL): build
+
+$(DISTWHEEL): dist/$(DISTWHEEL)
+	cp dist/$(DISTWHEEL) ./
+
+wheel: $(DISTWHEEL)
+
+clean: clean-docs clean-venv
+	rm -rf $(CLEAN_PATTERNS)
+
+clean-docs:
+	rm -rf ./docs
+
+clean-venv:
+	rm -rf ./$(VENV)
+
+create-venv:
+	$(PYTHON) -m venv $(VENV)
+	$(PIP_INSTALL) --upgrade pip
+	$(PIP_INSTALL) pylint pdoc3 build pytest $(OPTIONALS)
+
+.PHONY:: venv
+venv:
+	test -d $(VENV) || make create-venv
+
+venv-install: venv $(DISTWHEEL)
+	$(PIP_INSTALL) --force-reinstall $(DISTWHEEL)
+
+upload-release:
+	test -f "$(DISTWHEEL)"    || $(call echo_fail,No distwheel file available)
+	test -n "$(TWINE_UPLOAD)" || $(call echo_fail,No twine upload repo set)
+	$(TWINE_UPLOAD_WHEEL) "$(DISTWHEEL)"
+
+upload-dev:
+	make print-vars
+	test -f dist/$(DISTWHEEL_LAST) || $(call echo_fail No distwheel file available)
+	test -n "$(TWINE_UPLOAD)"      || $(call echo_fail No twine upload repo set)
+	$(TWINE_UPLOAD_WHEEL) "dist/$(DISTWHEEL_LAST)"
