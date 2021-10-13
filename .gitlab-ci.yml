@@ -5,16 +5,22 @@ variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
 .cache-paths: &cache-paths
-    paths:
-      - .cache/pip
-      - venv
+  paths:
+    - .cache/pip
+    - venv
+
+.common:
+  tags:
+  - container
 
 .cache-user:
+  extends: .common
   cache:
     <<: *cache-paths
     policy: pull
 
 .cache-creator:
+  extends: .common
   cache:
     <<: *cache-paths
     policy: push
@@ -31,7 +37,6 @@ stages:
   - docs
   - upload-successful
 
-
 prep:
   extends: .cache-creator
   stage: prep
@@ -40,8 +45,6 @@ prep:
     - . venv/bin/activate
     - if test -n "$TWINE_UPLOAD" ; then export PIP_EXTRA_INDEX_URL=$TWINE_REPOSITORY/simple/ ; fi
     - pip install --upgrade pip build wheel setuptools
-  tags:
-    - container
 
 build:
   extends: .cache-user
@@ -52,8 +55,6 @@ build:
   artifacts:
     paths:
       - dist/*.whl
-  tags:
-    - container
 
 test-install:
   extends: .cache-user
@@ -63,8 +64,6 @@ test-install:
     - pip list
     - pip install dist/*.whl
     - pip list
-  tags:
-    - container
 
 run-examples:
   extends: .cache-user
@@ -74,8 +73,6 @@ run-examples:
     - pip install dist/*.whl
     - python3 -m readcsv.test_csvreader
     - python3 -m readcsv.examples
-  tags:
-    - container
 
 .docs-stage:
   extends: .cache-user
@@ -89,8 +86,6 @@ run-examples:
   artifacts:
     paths:
       - public
-  tags:
-    - container
 
 docs:
   extends: .docs-stage
