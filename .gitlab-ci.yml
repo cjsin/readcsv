@@ -6,7 +6,7 @@ variables:
 
 .common:
   tags:
-  - container
+    - container
 
 .cache-paths: &cache-paths
   paths:
