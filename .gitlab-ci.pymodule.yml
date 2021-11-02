@@ -26,7 +26,7 @@ variables:
 
 before_script:
   - python3 -V  # Print out python version for debugging
-  - env| egrep 'CI_|PIP_' || true
+  - env| egrep 'CI_|PIP_|TWINE_' || true
 
 stages:
   - prep
@@ -97,7 +97,7 @@ stages:
   extends: .docs-stage
   except:
     - master
-    
+
 .pages:
   extends: .docs-stage
   only:
@@ -108,4 +108,4 @@ stages:
   stage: upload-successful
   script:
     - . venv/bin/activate
-    - if test -n "${TWINE_UPLOAD}" ; then pip install twine; twine upload -u "${TWINE_USERNAME}" --repository-url "${TWINE_REPOSITORY}" dist/*.whl ; fi
+    - if test -n "${TWINE_UPLOAD}"; then pip install twine; twine upload -u "${TWINE_USERNAME}" --repository-url "${TWINE_REPOSITORY}" dist/*.whl ; fi
