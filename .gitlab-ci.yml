@@ -22,7 +22,7 @@ run-examples:
 
 docs:
   extends: .docs
-    
+
 pages:
   extends: .pages
 
