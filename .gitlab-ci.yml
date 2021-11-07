@@ -15,7 +15,7 @@ test-install:
 run-examples:
   extends: .run-examples
   script:
-    - . venv/bin/activate
+    - if [[ -d /venv ]]; then . /venv/bin/activate; else python3 -m venv venv; . venv/bin/activate ; fi
     - pip install $PIP_OPTIONS dist/*.whl
     - python3 -m readcsv.test_csvreader
     - python3 -m readcsv.examples
