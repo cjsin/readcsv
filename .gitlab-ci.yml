@@ -3,9 +3,6 @@ include: .gitlab-ci.pymodule.yml
 variables:
   PACKAGE_NAME: readcsv
 
-prep:
-  extends: .prep
-
 build:
   extends: .build
 
