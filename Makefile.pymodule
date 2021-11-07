@@ -34,8 +34,11 @@ TWINE_UPLOAD   ?= ""
 UPLOAD_WHEEL    = twine upload -r "$(TWINE_UPLOAD)"
 PYLINT_DISABLED = invalid-name \
                   line-too-long \
+				  unspecified-encoding \
                   trailing-newlines \
                   bare-except \
+				  use-dict-literal \
+				  consider-using-f-string \
                   unused-wildcard-import \
                   wildcard-import \
                   unused-import \
@@ -51,7 +54,8 @@ PYLINT_DISABLED = invalid-name \
                   too-many-nested-blocks \
                   too-many-statements \
                   too-many-public-methods \
-                  too-many-locals
+                  too-many-locals \
+				  $(EXTRA_PLYLINT_DISABLED)
 
 PYLINT_FLAGS   := -d $(call join-with,$(comma),$(PYLINT_DISABLED))
 CLEAN_PATTERNS := \
